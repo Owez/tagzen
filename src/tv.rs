@@ -149,9 +149,12 @@ impl Capture {
 
 /// Seasonal input for the [season] rocket path
 #[derive(Debug, PartialEq, Clone, Deserialize)]
-pub struct Episodes {
+pub struct Season {
     /// Names for episodes, corrosponding to [Capture::file_path]
-    pub names: Vec<String>,
+    pub episodes: Vec<String>,
+
+    /// Season number
+    pub number: usize,
 }
 
 /// Gives help by providing available endpoints (to [episode] and [season])
@@ -182,22 +185,21 @@ pub fn episode(
 /// Gives help for how to use the [season] path
 #[get("/tv/season")]
 pub fn season_help() -> &'static str {
-    "ENDPOINT POST /tv/season\n\n\nAbout\n    Tags entire array of episodes into a single season according to the provided\n    `season` parameter.\n\n\nExample JSON\n    {\n        \"episodes\": [\n            \"ep 1.mp4\",\n            \"etc episode4.mpv\"\n        ],\n        \"season\": 4\n    }"
+    "ENDPOINT POST /tv/season\n\n\nAbout\n    Tags entire array of episodes into a single season according to the provided\n    `season` parameter.\n\n\nExample JSON\n    {\n        \"season\": {\n            \"episodes\": [\n                \"a ep1.mp4\",\n                \"other hello season 6 episode 2.mpv\"\n            ],\n            \"number\": 5\n        }\n    }"
 }
 
 /// Multiple tv inputs corrosponding to seasons
-#[post("/tv/season?<number>", format = "json", data = "<episodes>")]
-pub fn season(number: Option<usize>, episodes: Json<Episodes>) -> ResponseModel<Vec<Capture>> {
+#[post("/tv/season", format = "json", data = "<season>")]
+pub fn season(season: Json<Season>) -> ResponseModel<Vec<Capture>> {
+    let season = season.into_inner();
     let context = Context {
-        season: number,
+        season: Some(season.number),
         episode: None,
     };
-    let names = episodes.into_inner().names;
+    let mut caps = Vec::with_capacity(season.episodes.len());
 
-    let mut caps = Vec::with_capacity(names.len());
-
-    for name in names {
-        caps.push(match Capture::new(name, &context) {
+    for episode in season.episodes {
+        caps.push(match Capture::new(episode, &context) {
             Ok(cap) => cap,
             Err(err) => return ResponseModel::basic(400, err),
         })
