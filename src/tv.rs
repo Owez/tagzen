@@ -12,7 +12,8 @@ const NUMBER_REGEX: &str = r"[0-9]+";
 use crate::utils::ResponseModel;
 
 use regex::{Match, Regex};
-use serde::Serialize;
+use rocket_contrib::json::Json;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Attempts to capture `filename` used and `ext` used from a given `file_path`
@@ -127,7 +128,7 @@ pub struct Capture {
 
 impl Capture {
     /// Creates a new [Capture] from filepath and optional context to help it along
-    pub fn new(file_path: String, context: Context) -> Result<Self, CaptureError> {
+    pub fn new(file_path: String, context: &Context) -> Result<Self, CaptureError> {
         let (filename, ext) = cap_filename_ext(&file_path);
 
         Ok(Self {
@@ -146,17 +147,63 @@ impl Capture {
     }
 }
 
-/// Single file capture with [Context] providers
-#[get("/tv/single?<name>&<episode>&<season>")]
-pub fn single(
+/// Seasonal input for the [season] rocket path
+#[derive(Debug, PartialEq, Clone, Deserialize)]
+pub struct Episodes {
+    /// Names for episodes, corrosponding to [Capture::file_path]
+    pub names: Vec<String>,
+}
+
+/// Gives help by providing available endpoints (to [episode] and [season])
+#[get("/tv")]
+pub fn help() -> &'static str {
+    "ROUTE /tv\n\n\nAbout\n    Allows tagging of tv shows with conventional season + episode tagging,\n    allowing manual explicit (optional) season or episode numbers to be passed\n    for clarification\n\n\nChild routes/endpoints\n    - /episode: Single episode tagging\n    - /season: Bulk per-season tagging"
+}
+
+/// Gives help for how to use the [episode] path
+#[get("/tv/episode")]
+pub fn episode_help() -> &'static str {
+    "ENDPOINT POST /tv/episode?<name>&<episode>&<season>\n\n\nAbout\n    Tags a single episode of a tv show by it's required `name` with optional\n    passed context by including either `episode` or `season` query args."
+}
+
+/// Single episode file capture with [Context] providers
+#[post("/tv/episode?<name>&<episode>&<season>")]
+pub fn episode(
     name: String,
     episode: Option<usize>,
     season: Option<usize>,
 ) -> ResponseModel<Capture> {
-    match Capture::new(name, Context { episode, season }) {
+    match Capture::new(name, &Context { episode, season }) {
         Ok(cap) => ResponseModel::new(200, "Success", cap),
         Err(err) => ResponseModel::basic(400, err),
     }
+}
+
+/// Gives help for how to use the [season] path
+#[get("/tv/season")]
+pub fn season_help() -> &'static str {
+    "ENDPOINT POST /tv/season\n\n\nAbout\n    Tags entire array of episodes into a single season according to the provided\n    `season` parameter.\n\n\nExample JSON\n    {\n        \"episodes\": [\n            \"ep 1.mp4\",\n            \"etc episode4.mpv\"\n        ],\n        \"season\": 4\n    }"
+}
+
+/// Multiple tv inputs corrosponding to seasons
+#[post("/tv/season?<number>", format = "json", data = "<episodes>")]
+pub fn season(number: Option<usize>, episodes: Json<Episodes>) -> ResponseModel<Vec<Capture>> {
+    let context = Context {
+        season: number,
+        episode: None,
+    };
+    let names = episodes.into_inner().names;
+
+    let mut caps = Vec::with_capacity(names.len());
+
+    for name in names {
+        caps.push(match Capture::new(name, &context) {
+            Ok(cap) => cap,
+            Err(err) => return ResponseModel::basic(400, err),
+        })
+    }
+
+    ResponseModel::new(200, "Success", caps)
 }
 
 #[cfg(test)]
