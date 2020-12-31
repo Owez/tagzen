@@ -1,5 +1,8 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
+/// Crate version
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[macro_use]
 extern crate rocket;
 
@@ -10,7 +13,7 @@ use utils::ResponseModel;
 
 #[get("/")]
 fn index() -> ResponseModel<()> {
-    ResponseModel::basic(200, format!("Microservice called 'tagzen' on v{} made for tagging television shows and movies made by https://ogriffiths.com", env!("CARGO_PKG_VERSION")))
+    ResponseModel::basic(200, format!("Microservice called 'tagzen' on v{} made for tagging television shows and movies made by https://ogriffiths.com", VERSION))
 }
 
 fn main() {
