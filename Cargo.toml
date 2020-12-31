@@ -7,5 +7,5 @@ edition = "2018"
 [dependencies]
 regex = "1.4.2"
 rocket = "0.4.6"
-rocket_contrib = { version = "0.4.2", features = ["json"] }
+rocket_contrib = { version = "0.4.2", features = ["json", "helmet"] }
 serde = { version = "1", features = ["derive"] }
