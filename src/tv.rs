@@ -24,7 +24,7 @@ fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
     (
         split[0].to_string(),
         if split.len() > 1 {
-            Some(split.last().unwrap().to_string())
+            Some(format!(".{}", split.last().unwrap()))
         } else {
             None
         },
@@ -137,7 +137,8 @@ impl Capture {
         .expect("Could not make well-formed regex group")
         .replace_all(&filename, "")
         .as_ref()
-        .to_string();
+        .replace(".", " ") // these could be regex but simplicity
+        .replace("-", " ");
 
         Ok(Self {
             file_path,
