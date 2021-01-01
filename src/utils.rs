@@ -7,6 +7,9 @@ use rocket_contrib::json::Json;
 use serde::Serialize;
 use std::fmt;
 
+/// Regex pattern for alphanumeric-only regex characters
+pub const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9]";
+
 /// A template to respond to requests with, includes status code and message,
 /// along with an optional `body` key that may contain anything (but should
 /// ideally be as standard as possible)

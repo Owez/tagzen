@@ -9,7 +9,7 @@ const SEASON_REGEX: &str = r"(?i)(s(eason)? *[0-9]+){1}";
 /// Gets numbers from a known regex such as [EPISODE_REGEX] or [SEASON_REGEX]
 const NUMBER_REGEX: &str = r"[0-9]+";
 
-use crate::utils::ResponseModel;
+use crate::utils::{ResponseModel, ALPHANUMERIC_REGEX};
 
 use regex::{Match, Regex};
 use rocket_contrib::json::Json;
@@ -24,7 +24,7 @@ fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
     (
         split[0].to_string(),
         if split.len() > 1 {
-            Some(format!(".{}", split[1..].join(".")))
+            Some(split.last().unwrap().to_string())
         } else {
             None
         },
@@ -112,9 +112,9 @@ pub struct Capture {
     /// Original, pre-parsed file_path provided
     pub file_path: String,
 
-    /// Parsed [Capture::file_path] without extension (if any). Similar to
-    /// [std::path::PathBuf::file_stem]
-    pub filename: String,
+    /// Human readable name of the tv file in alphanumeric title case without
+    /// season/episode numbers or [Capture::ext]
+    pub name: String,
 
     /// Optional file extension found from parsing [Capture::file_path]
     pub ext: Option<String>,
@@ -130,6 +130,14 @@ impl Capture {
     /// Creates a new [Capture] from filepath and optional context to help it along
     pub fn new(file_path: String, context: &Context) -> Result<Self, CaptureError> {
         let (filename, ext) = cap_filename_ext(&file_path);
+        let name = Regex::new(&format!(
+            "({})|({})|({})",
+            EPISODE_REGEX, SEASON_REGEX, ALPHANUMERIC_REGEX
+        ))
+        .expect("Could not make well-formed regex group")
+        .replace_all(&filename, "")
+        .as_ref()
+        .to_string();
 
         Ok(Self {
             file_path,
@@ -142,7 +150,7 @@ impl Capture {
                 Some(se) => se,
                 None => cap_season(&filename)?,
             },
-            filename,
+            name,
         })
     }
 }
