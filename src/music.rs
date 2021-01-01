@@ -46,11 +46,11 @@ impl SingleSong {
         let render = format!(
             "{}{} — {}",
             match &artist {
-                Some(a) => a,
-                None => "Unknown artist",
+                Some(a) => format_name(a),
+                None => "Unknown artist".to_string(),
             },
             match &album {
-                Some(album) => format!(" — {}", album),
+                Some(album) => format!(" — {}", format_name(album)),
                 None => String::new(),
             },
             name

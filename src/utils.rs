@@ -9,7 +9,7 @@ use serde::Serialize;
 use std::fmt;
 
 /// Regex pattern for alphanumeric-only regex characters
-const ALPHANUMERIC_REGEX: &str = r"(^ *)|[^a-zA-z0-9 ]|( *$)";
+const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9 ]";
 
 /// Rgex pattern for converting special characters to spaces
 const TO_SPACE_REGEX: &str = r"(\.|-| {2,})+";
@@ -78,5 +78,7 @@ pub fn format_name(name: impl AsRef<str>) -> String {
     Regex::new(ALPHANUMERIC_REGEX)
         .unwrap()
         .replace_all(&space_sep, "")
+        .as_ref()
+        .trim()
         .to_string()
 }
