@@ -9,7 +9,7 @@ const SEASON_REGEX: &str = r"(?i)(s(eason)? *[0-9]+){1}";
 /// Gets numbers from a known regex such as [EPISODE_REGEX] or [SEASON_REGEX]
 const NUMBER_REGEX: &str = r"[0-9]+";
 
-use crate::utils::{cap_filename_ext, ResponseModel, ALPHANUMERIC_REGEX};
+use crate::utils::{cap_filename_ext, format_name, ResponseModel};
 
 use regex::{Match, Regex};
 use rocket_contrib::json::Json;
@@ -115,13 +115,6 @@ impl Capture {
     /// Creates a new [Capture] from filepath and optional context to help it along
     pub fn new(file_path: String, context: &Context) -> Result<Self, CaptureError> {
         let (filename, ext) = cap_filename_ext(&file_path);
-        let name = Regex::new(&format!(
-            "({})|({})|({})",
-            EPISODE_REGEX, SEASON_REGEX, ALPHANUMERIC_REGEX
-        ))
-        .expect("Could not make well-formed regex group")
-        .replace_all(&filename.replace("-", " "), "")
-        .to_string();
 
         Ok(Self {
             file_path,
@@ -134,7 +127,7 @@ impl Capture {
                 Some(se) => se,
                 None => cap_season(&filename)?,
             },
-            name,
+            name: format_name(filename),
         })
     }
 }

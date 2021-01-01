@@ -1,5 +1,6 @@
 //! Utility items
 
+use regex::Regex;
 use rocket::http::Status;
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
@@ -8,7 +9,10 @@ use serde::Serialize;
 use std::fmt;
 
 /// Regex pattern for alphanumeric-only regex characters
-pub const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9 ]";
+const ALPHANUMERIC_REGEX: &str = r"(^ *)|[^a-zA-z0-9 ]|( *$)";
+
+/// Rgex pattern for converting special characters to spaces
+const TO_SPACE_REGEX: &str = r"(\.|-| {2,})+";
 
 /// A template to respond to requests with, includes status code and message,
 /// along with an optional `body` key that may contain anything (but should
@@ -50,8 +54,8 @@ impl<'r, T: Serialize> Responder<'r> for ResponseModel<T> {
 
 /// Attempts to capture `filename` used and `ext` used from a given `file_path`
 /// by splitting
-pub fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
-    let split: Vec<&str> = file_path.split('.').collect();
+pub fn cap_filename_ext(file_path: impl AsRef<str>) -> (String, Option<String>) {
+    let split: Vec<&str> = file_path.as_ref().split('.').collect();
 
     (
         split[..split.len() - 1].join(".").to_string(),
@@ -61,4 +65,18 @@ pub fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
             None
         },
     )
+}
+
+/// Formats name by elimintating non alphanumeric characters with the use of
+/// regex and replacing characters with spaces
+pub fn format_name(name: impl AsRef<str>) -> String {
+    let space_sep = Regex::new(TO_SPACE_REGEX)
+        .unwrap()
+        .replace_all(name.as_ref(), " ")
+        .to_string();
+
+    Regex::new(ALPHANUMERIC_REGEX)
+        .unwrap()
+        .replace_all(&space_sep, "")
+        .to_string()
 }
