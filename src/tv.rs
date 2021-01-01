@@ -9,27 +9,12 @@ const SEASON_REGEX: &str = r"(?i)(s(eason)? *[0-9]+){1}";
 /// Gets numbers from a known regex such as [EPISODE_REGEX] or [SEASON_REGEX]
 const NUMBER_REGEX: &str = r"[0-9]+";
 
-use crate::utils::{ResponseModel, ALPHANUMERIC_REGEX};
+use crate::utils::{cap_filename_ext, ResponseModel, ALPHANUMERIC_REGEX};
 
 use regex::{Match, Regex};
 use rocket_contrib::json::Json;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-
-/// Attempts to capture `filename` used and `ext` used from a given `file_path`
-/// by splitting
-fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
-    let split: Vec<&str> = file_path.split('.').collect();
-
-    (
-        split[0].to_string(),
-        if split.len() > 1 {
-            Some(format!(".{}", split.last().unwrap()))
-        } else {
-            None
-        },
-    )
-}
 
 /// Finds captured number from a given [Match]; ensure regex passed has numbers
 fn cap_num(captured: Match<'_>) -> usize {
@@ -135,10 +120,8 @@ impl Capture {
             EPISODE_REGEX, SEASON_REGEX, ALPHANUMERIC_REGEX
         ))
         .expect("Could not make well-formed regex group")
-        .replace_all(&filename, "")
-        .as_ref()
-        .replace(".", " ") // these could be regex but simplicity
-        .replace("-", " ");
+        .replace_all(&filename.replace("-", " "), "")
+        .to_string();
 
         Ok(Self {
             file_path,

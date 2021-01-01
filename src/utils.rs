@@ -8,7 +8,7 @@ use serde::Serialize;
 use std::fmt;
 
 /// Regex pattern for alphanumeric-only regex characters
-pub const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9]";
+pub const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9 ]";
 
 /// A template to respond to requests with, includes status code and message,
 /// along with an optional `body` key that may contain anything (but should
@@ -46,4 +46,19 @@ impl<'r, T: Serialize> Responder<'r> for ResponseModel<T> {
             .status(Status::from_code(self.status).unwrap())
             .ok()
     }
+}
+
+/// Attempts to capture `filename` used and `ext` used from a given `file_path`
+/// by splitting
+pub fn cap_filename_ext(file_path: &str) -> (String, Option<String>) {
+    let split: Vec<&str> = file_path.split('.').collect();
+
+    (
+        split[..split.len() - 1].join(".").to_string(),
+        if split.len() > 1 {
+            Some(format!(".{}", split.last().unwrap()))
+        } else {
+            None
+        },
+    )
 }
