@@ -50,7 +50,11 @@ impl SingleSong {
                 None => "Unknown artist".to_string(),
             },
             match &album {
-                Some(album) => format!(" — {}", format_name(album)),
+                Some(album) => if album != &name {
+                    format!(" — {}", format_name(album))
+                } else {
+                    String::new()
+                },
                 None => String::new(),
             },
             name
