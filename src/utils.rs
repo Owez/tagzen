@@ -8,9 +8,6 @@ use rocket_contrib::json::Json;
 use serde::Serialize;
 use std::fmt;
 
-/// Regex pattern for alphanumeric-only regex characters
-const ALPHANUMERIC_REGEX: &str = r"[^a-zA-z0-9 ]";
-
 /// Rgex pattern for converting special characters to spaces
 const TO_SPACE_REGEX: &str = r"(\.|-| {2,})+";
 
@@ -70,15 +67,8 @@ pub fn cap_filename_ext(file_path: impl AsRef<str>) -> (String, Option<String>) 
 /// Formats name by elimintating non alphanumeric characters with the use of
 /// regex and replacing characters with spaces
 pub fn format_name(name: impl AsRef<str>) -> String {
-    let space_sep = Regex::new(TO_SPACE_REGEX)
+    Regex::new(TO_SPACE_REGEX)
         .unwrap()
         .replace_all(name.as_ref(), " ")
-        .to_string();
-
-    Regex::new(ALPHANUMERIC_REGEX)
-        .unwrap()
-        .replace_all(&space_sep, "")
-        .as_ref()
-        .trim()
-        .to_string()
+        .as_ref().trim().to_string()
 }
