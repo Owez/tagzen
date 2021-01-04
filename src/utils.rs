@@ -9,7 +9,7 @@ use serde::Serialize;
 use std::fmt;
 
 /// Rgex pattern for converting special characters to spaces
-const TO_SPACE_REGEX: &str = r"(\.|-| {2,})+";
+const TO_SPACE_REGEX: &str = r"(\.|-| )+";
 
 /// A template to respond to requests with, includes status code and message,
 /// along with an optional `body` key that may contain anything (but should
